@@ -1,0 +1,776 @@
+{
+  "name": "AI-powered freelance opportunity intelligence system",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -688,
+        48
+      ],
+      "id": "f1a34f47-e2ef-482c-ab38-2c01eb2ccbc7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.freelancer.com/api/projects/0.1/projects/active/?limit=15&job_details=true&jobs%5B%5D=95&jobs%5B%5D=1977&jobs%5B%5D=2806&jobs%5B%5D=208&jobs%5B%5D=1075&jobs%5B%5D=2801&jobs%5B%5D=1051&t={{ Date.now() }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        -80
+      ],
+      "id": "39790954-9c1d-4c4a-b9e6-b25d64042a45",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result.projects",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -80
+      ],
+      "id": "6667e9a2-2c9f-445c-ab8a-a93ad25b6e68",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04845306-60f2-459a-b5c5-13dd06d670ff",
+              "leftValue": "={{ $json.title.toUpperCase() }}",
+              "rightValue": "UGC",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "b66d7077-9ae3-4a13-8934-910a32dcb663",
+              "leftValue": "={{ $json.submitdate }}",
+              "rightValue": "={{ Math.floor(Date.now() / 1000) - 130 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        112,
+        -80
+      ],
+      "id": "490ce5e2-fca3-43ee-8592-568a0e38d7d3",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert AI Automation Engineer and friendly consultant bidding on freelance projects. Your goal is to write a warm, human, and highly persuasive proposal that makes the client feel understood. \n\nCRITICAL RULES:\n1. NO BUZZWORD SOUP. Do not use words like \"orchestrate,\" \"synergistic,\" \"middleware,\" or \"pipeline.\" Speak like a normal, highly skilled human.\n2. MATCH THEIR STACK: If they ask for Make.com, pitch Make.com. NEVER pitch a different tool (like n8n or custom Python) unless they ask for it.\n3. Keep it brief: Exactly 3 to 4 short, readable paragraphs.\n4. Output ONLY the raw proposal text. No placeholders, no \"Subject:\", no \"Here is your pitch:\".\n\nSTRUCTURE:\n- Paragraph 1 (The Hook): Acknowledge their specific business goal or the problem they are trying to solve (e.g., replacing an expensive tool, saving time). \n- Paragraph 2 (The Execution): Explain simply how you will connect their specific tools to get the job done. Prove you read the requirements.\n- Paragraph 3 (The Offer): You MUST include this exact sentence verbatim: \"To make this a no-brainer, I include 21 days of free maintenance and hosting server to ensure everything runs flawlessly after hand-off.\"\n- Paragraph 4 (The Question): End with a simple, conversational question about their current setup to invite a reply."
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Write a proposal for this job. Title: {{ $json.Universal_Title }} Description: {{ $json.Universal_Description }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1728,
+        -16
+      ],
+      "id": "6e5cb6c0-7b82-45e9-834d-94be4ac9ef16",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        304
+      ],
+      "id": "3d60b8eb-8d97-4136-9225-484923ce8944",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "R1mWn8kLriYe3UBS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6076554716",
+        "text": "=🚨 NEW JOB SCOUTED ({{ $('Loop Over Items').item.json.Source_Platform }}) 🚨\n\nTitle: {{ $('Loop Over Items').item.json.Universal_Title }}\n\nDescription: {{ $('Loop Over Items').item.json.Universal_Description }}\n\nBudget: {{ $('Loop Over Items').item.json.Universal_Budget }}\n\n🤖 AI Pitch: \n{{ $json.text }}\n\nLink: {{ $('Loop Over Items').item.json.Universal_URL }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Approve & Bid",
+                    "additionalFields": {
+                      "callback_data": "=bid_{{ $node[\"Loop Over Items\"].json[\"id\"] }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Skip",
+                    "additionalFields": {
+                      "callback_data": "=skip_{{ $node[\"Loop Over Items\"].json[\"id\"] }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -16
+      ],
+      "id": "945aaf49-08b9-4b6d-83fe-321e16855daa",
+      "name": "Send a text message",
+      "webhookId": "92e4d85d-2e7b-4433-a1c9-7bc54eedc1c8",
+      "credentials": {
+        "telegramApi": {
+          "id": "oxa96CYNr7Ik15XM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        -32
+      ],
+      "id": "4616acf7-f419-4d6d-9f71-b53488389953",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2560,
+        -16
+      ],
+      "id": "731ef92b-d6f4-4a30-9263-2a1b6809553f",
+      "name": "Wait",
+      "webhookId": "5fa3cb4f-a510-43fc-a3ff-82480270fe1f"
+    },
+    {
+      "parameters": {
+        "url": "https://api.truelancer.com/api/v1/projects",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -304,
+        128
+      ],
+      "id": "b445c6a1-d87a-4e95-a8a6-b13c2db8be92",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98310fca-7adc-4662-94fc-eb9dc529fefa",
+              "name": "Universal_Title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "55f6670b-20c0-4714-9956-e67cb6507618",
+              "name": "Universal_Description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "d9855561-f5ee-44dc-ba64-197a8b92fdea",
+              "name": "Universal_Budget",
+              "value": "={{ $json.budget }}{{ $json.currency }}",
+              "type": "string"
+            },
+            {
+              "id": "365a45a6-cff0-4bb0-88ee-28bb449fc1da",
+              "name": "Universal_URL",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "76d86672-8801-4495-ae6c-488067d3090e",
+              "name": "Source_Platform",
+              "value": "Truelancer",
+              "type": "string"
+            },
+            {
+              "id": "b1236e59-6710-4615-9412-e7229c269d23",
+              "name": "=External_Job_ID",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "935cf3cc-a96d-4433-9638-54e7ca14785f",
+              "name": "=created_at",
+              "value": "={{ new Date($json.submitdate * 1000).toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        128
+      ],
+      "id": "3fc7e774-7bc9-4404-a440-e9382c828624",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "projects.data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        128
+      ],
+      "id": "a57ad7df-d8d8-490b-8df4-bf059c846124",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c100553e-591d-4f08-91e5-a3a3f7985241",
+              "name": "Universal_Title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "e7932e5e-bde6-40eb-8c82-765251a0cdf9",
+              "name": "Universal_Description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "eb0e8377-2b32-46ae-a334-3cf870af8687",
+              "name": "Universal_Budget",
+              "value": "={{ $json.bid_stats.bid_avg}} {{ $json.currency.code }}",
+              "type": "string"
+            },
+            {
+              "id": "b14de85d-758e-4829-a5b7-f972e2c4a24e",
+              "name": "Universal_URL",
+              "value": "=https://www.freelancer.com/projects/{{ $json.seo_url }}",
+              "type": "string"
+            },
+            {
+              "id": "bd6d139a-4680-4f6c-b1a5-40f4c03c4e6c",
+              "name": "Source_Platform",
+              "value": "Freelancer",
+              "type": "string"
+            },
+            {
+              "id": "60b9dc05-63b2-40aa-9978-ff6618560f03",
+              "name": "=External_Job_ID",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "d29032fb-ba6c-4d6d-b369-e0b7d3bbf02a",
+              "name": "=created_at",
+              "value": "={{ new Date($json.submitdate * 1000).toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        -80
+      ],
+      "id": "7efb3b21-bbfb-4b82-8b55-a3dc9629210c",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        -32
+      ],
+      "id": "146643d5-a71f-4a92-9d5d-82efa9283bd5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dd7e465e-5004-4e6c-a17e-c957811b612e",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Web Scraping",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "bd4ae448-e021-4878-8b60-4879fd4859c6",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Customer service",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a1958f88-0ff9-4d9f-9f70-a938c1c726e6",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "CRM",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "430adc6a-833e-448b-8d65-021ad761061b",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Data Entry Operators",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "14c73481-25fa-46d3-af64-31fce89c65a9",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Web Scraping Specialists",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "60034282-0eac-4f04-beec-dd2aff1308b4",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Lead Generation Experts",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "ce20865b-356a-4ae3-8e79-9767e582fe0c",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Advertising Specialists",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "9164c440-6ac7-4e0e-b0a4-88047da55b96",
+              "leftValue": "={{ $json.skills.map(skill => skill.name).join(' | ') }}",
+              "rightValue": "Google Adword Expert",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        128
+      ],
+      "id": "5294d7de-f39b-4258-a780-2863aa251ec8",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "useCustomSchema": true,
+        "tableId": "processed_jobs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Loop Over Items').item.json.Universal_Title }}"
+            },
+            {
+              "fieldId": "platform",
+              "fieldValue": "={{ $('Loop Over Items').item.json.Source_Platform }}"
+            },
+            {
+              "fieldId": "external_job_id",
+              "fieldValue": "={{ $('Loop Over Items').item.json.External_Job_ID }}"
+            },
+            {
+              "fieldId": "description",
+              "fieldValue": "={{ $('Loop Over Items').item.json.Universal_Description }}"
+            },
+            {
+              "fieldId": "budget",
+              "fieldValue": "={{ $('Loop Over Items').item.json.Universal_Budget }}"
+            },
+            {
+              "fieldId": "url",
+              "fieldValue": "={{ $('Loop Over Items').item.json.Universal_URL }}"
+            },
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ $('Loop Over Items').item.json.created_at }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        -16
+      ],
+      "id": "b89c173a-44bb-4b31-9291-7b638bb49dcc",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "FefRmcnYI2uu9yLb",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "685cc385-af12-41ef-876d-b2c626049654",
+              "leftValue": "={{ $json.created_at }}",
+              "rightValue": "={{ $now.minus({minutes: 2}) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        96,
+        128
+      ],
+      "id": "2939a980-f0f4-4900-8923-d71b93f7c53b",
+      "name": "Filter2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Filter2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter2": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "d928cc9a-e4cc-404d-9f15-88b522bfed7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e2f0c6f7706ec765dbba235d9132395a83e534988376dcb5676eba9fe90cb667"
+  },
+  "id": "wJNlofsYFPTnXqnq",
+  "tags": []
+}
