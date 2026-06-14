@@ -1,0 +1,48 @@
+# ==========================================
+# Operating System Clutter
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+Thumsc.db
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==========================================
+# Sensitive Credentials & Environment Configs
+# ==========================================
+# Block all environment files containing tokens/keys
+.env
+.env.local
+.env.development
+.env.production
+*.env
+
+# Block explicit credential backups or configuration exports
+credentials.json
+secrets.json
+config.save
+*.bak
+
+# Block private cloud server keys if backed up locally
+*.pem
+*.key
+*.pub
+
+# ==========================================
+# Node.js / Local Script Relics
+# ==========================================
+# If you run any local test scripts or express setups
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ==========================================
+# n8n Local Instance Caches
+# ==========================================
+# If you ever clone or mirror your n8n configuration data directory locally
+.n8n/
+n8n-local-cache/
